@@ -29,18 +29,20 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const url = request.nextUrl.clone();
-  const isAuthRoute = url.pathname.startsWith("/login") || url.pathname.startsWith("/register");
-  const isDashboard = !isAuthRoute && url.pathname !== "/";
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isDashboard = !isAuthRoute && pathname !== "/";
 
   if (!user && isDashboard) {
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost";
+    const proto = request.headers.get("x-forwarded-proto") || "https";
+    return NextResponse.redirect(`${proto}://${host}/login`);
   }
 
   if (user && isAuthRoute) {
-    url.pathname = "/native";
-    return NextResponse.redirect(url);
+    const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost";
+    const proto = request.headers.get("x-forwarded-proto") || "https";
+    return NextResponse.redirect(`${proto}://${host}/native`);
   }
 
   return supabaseResponse;
